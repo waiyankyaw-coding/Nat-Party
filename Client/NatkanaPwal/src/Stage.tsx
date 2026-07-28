@@ -38,32 +38,51 @@ export const Stage: React.FC = () => {
   };
 
   const [gifters, setGifters] = useState<Gifter[]>(() => {
-    const pos1 = generateRandomFloorPos();
-    const pos2 = generateRandomFloorPos();
     const now = Date.now();
-
-    return [
-      {
-        id: `default-1-${now}`,
-        username: 'Ko Gyi Kyaw',
-        isDancing: true,
-        x: pos1.x,
-        y: pos1.y,
-        characterType: 'ko-gyi-kyaw',
-        isVIP: false,
-        createdAt: now,
-      },
-      {
-        id: `default-2-${now}`,
-        username: 'Ma Phae Wah',
-        isDancing: true,
-        x: pos2.x,
-        y: pos2.y,
-        characterType: 'ma-phal-war',
-        isVIP: false,
-        createdAt: now,
-      },
+    const characterKeys = Object.keys(CHARACTER_LIST) as CharacterType[];
+    
+    const sampleNames = [
+      'Ko Gyi Kyaw', 
+      'Ma Phae Wah', 
+      'Kyaw Kyaw 55', 
+      'Nilar 34', 
+      'Aung San', 
+      'Hla Hla'
     ];
+
+    // 1. Generate 6 default floor dancers with varied characters
+    const defaultFloorDancers: Gifter[] = Array.from({ length: 6 }, (_, index) => {
+      const pos = generateRandomFloorPos();
+      // Safely pick a diverse character type from your CHARACTER_LIST
+      const randomType = characterKeys[index % characterKeys.length] || getRandomCharacterType();
+      
+      return {
+        id: `default-floor-${index + 1}-${now}`,
+        username: sampleNames[index % sampleNames.length],
+        isDancing: true,
+        x: pos.x,
+        y: pos.y,
+        characterType: randomType,
+        isVIP: false,
+        createdAt: now,
+      };
+    });
+
+    // 2. Generate 1 default VIP dancer (using the center table position)
+    const defaultVIPDancer: Gifter = {
+      id: `default-vip-1-${now}`,
+      username: 'Kyaw_Kyaw_76',
+      isDancing: true,
+      x: VIP_POSITIONS[0].x, // Table Center (50%)
+      y: VIP_POSITIONS[0].y, // Table Center (50%)
+      characterType: characterKeys[0] || 'ko-gyi-kyaw',
+      isVIP: true,
+      vipSpotName: VIP_POSITIONS[0].name,
+      createdAt: now,
+    };
+
+    // 3. Combine them into the starting state
+    return [...defaultFloorDancers, defaultVIPDancer];
   });
 
   const [currentSongIndex, setCurrentSongIndex] = useState(0);
@@ -248,7 +267,7 @@ export const Stage: React.FC = () => {
               <div className="relative z-10">
                 <Character
                   type={gifter.characterType}
-                  isDancing={gifter.isDancing}
+                isDancing={gifter.isDancing}
                   height={calculatedHeight}
                 />
               </div>
