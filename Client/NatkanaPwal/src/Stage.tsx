@@ -6,6 +6,7 @@ import { io } from 'socket.io-client';
 interface Gifter {
   id: string;
   username: string;
+  avatarUrl?: string; // Added avatar support
   isDancing: boolean;
   x: number;
   y: number;
@@ -72,15 +73,14 @@ export const Stage: React.FC = () => {
       id: `default-vip-1-${now}`,
       username: 'Kyaw_Kyaw_76',
       isDancing: true,
-      x: VIP_POSITIONS[0].x, // Table Center (50%)
-      y: VIP_POSITIONS[0].y, // Table Center (50%)
+      x: VIP_POSITIONS[0].x,
+      y: VIP_POSITIONS[0].y,
       characterType: characterKeys[0] || 'ko-gyi-kyaw',
       isVIP: true,
       vipSpotName: VIP_POSITIONS[0].name,
       createdAt: now,
     };
 
-    // 3. Combine them into the starting state
     return [...defaultFloorDancers, defaultVIPDancer];
   });
 
@@ -125,7 +125,8 @@ export const Stage: React.FC = () => {
   const handleUserJoined = (
     username: string,
     characterType?: CharacterType,
-    isVIPUser: boolean = false
+    isVIPUser: boolean = false,
+    avatarUrl?: string
   ) => {
     const selectedCharacter = characterType || getRandomCharacterType();
     const cleanUsername = username.replace(/^👑\s*VIP_?/i, '');
@@ -143,6 +144,7 @@ export const Stage: React.FC = () => {
           {
             id: `${cleanUsername}-${Date.now()}`,
             username: cleanUsername,
+            avatarUrl,
             isDancing: true,
             x: targetSpot.x,
             y: targetSpot.y,
@@ -160,6 +162,7 @@ export const Stage: React.FC = () => {
         {
           id: `${cleanUsername}-${Date.now()}`,
           username: cleanUsername,
+          avatarUrl,
           isDancing: true,
           x: pos.x,
           y: pos.y,
@@ -174,14 +177,14 @@ export const Stage: React.FC = () => {
     }
   };
 
-  // WebSockets Connection - Listening to 'userJoined'
+  // WebSockets Connection - Listening to 'userJoined' with avatarUrl
   useEffect(() => {
     const socket = io('http://localhost:3000');
 
     socket.on(
       'userJoined',
-      (data: { username: string; characterType?: CharacterType; isVIP?: boolean }) => {
-        handleUserJoined(data.username, data.characterType, data.isVIP || false);
+      (data: { username: string; avatarUrl?: string; characterType?: CharacterType; isVIP?: boolean }) => {
+        handleUserJoined(data.username, data.characterType, data.isVIP || false, data.avatarUrl);
       }
     );
 
@@ -261,17 +264,28 @@ export const Stage: React.FC = () => {
                   <div className="absolute inset-0 bg-amber-400/20 blur-2xl rounded-full scale-150 pointer-events-none animate-pulse" style={{ animationDuration: '0.5s' }} />
                 )}
 
-                {/* Name Badge */}
-                <span
-                  className={`font-bold px-2.5 py-0.5 rounded-full shadow-2xl whitespace-nowrap mb-1 z-10 ${
-                    gifter.isVIP
-                      ? 'bg-gradient-to-r from-amber-500 via-yellow-300 to-amber-500 text-black border border-yellow-100 shadow-amber-500/50'
-                      : 'bg-black/80 text-amber-300 font-semibold border border-amber-400/50'
-                  }`}
-                  style={{ fontSize: `${fontSize}px` }}
-                >
-                  {gifter.isVIP ? `👑 VIP: ${gifter.username}` : gifter.username}
-                </span>
+                {/* Avatar & Name Badge Wrapper */}
+                <div className="flex flex-col items-center mb-1 z-10">
+                  {gifter.avatarUrl && (
+                    <img
+                      src={gifter.avatarUrl}
+                      alt={gifter.username}
+                      className={`rounded-full object-cover shadow-md mb-1 ${
+                        gifter.isVIP ? 'w-8 h-8 border-2 border-yellow-300' : 'w-6 h-6 border border-amber-400/70'
+                      }`}
+                    />
+                  )}
+                  <span
+                    className={`font-bold px-2.5 py-0.5 rounded-full shadow-2xl whitespace-nowrap ${
+                      gifter.isVIP
+                        ? 'bg-gradient-to-r from-amber-500 via-yellow-300 to-amber-500 text-black border border-yellow-100 shadow-amber-500/50'
+                        : 'bg-black/80 text-amber-300 font-semibold border border-amber-400/50'
+                    }`}
+                    style={{ fontSize: `${fontSize}px` }}
+                  >
+                    {gifter.isVIP ? `👑 VIP: ${gifter.username}` : gifter.username}
+                  </span>
+                </div>
 
                 {/* Character Render */}
                 <div className="relative z-10">
