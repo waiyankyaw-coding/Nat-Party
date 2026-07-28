@@ -9,5 +9,5 @@ export const SONGS: Song[] = [
 ];
 
 export const STAGE_CONFIG = {
-  backgroundImg: '/room/WhatsApp Image 2026-07-26 at 11.29.28 PM.jpeg',
+  backgroundImg: '/room/WhatsApp Image 2026-07-28 at 9.53.55 PM.jpeg',
 };

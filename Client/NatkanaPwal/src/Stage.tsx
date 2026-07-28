@@ -53,7 +53,6 @@ export const Stage: React.FC = () => {
     // 1. Generate 6 default floor dancers with varied characters
     const defaultFloorDancers: Gifter[] = Array.from({ length: 6 }, (_, index) => {
       const pos = generateRandomFloorPos();
-      // Safely pick a diverse character type from your CHARACTER_LIST
       const randomType = characterKeys[index % characterKeys.length] || getRandomCharacterType();
       
       return {
@@ -123,10 +122,10 @@ export const Stage: React.FC = () => {
     return () => clearInterval(interval);
   }, []);
 
-  const handleGiftReceived = (
+  const handleUserJoined = (
     username: string,
     characterType?: CharacterType,
-    isVIPGift: boolean = false
+    isVIPUser: boolean = false
   ) => {
     const selectedCharacter = characterType || getRandomCharacterType();
     const cleanUsername = username.replace(/^👑\s*VIP_?/i, '');
@@ -134,7 +133,7 @@ export const Stage: React.FC = () => {
     setGifters((prev) => {
       if (prev.some((g) => g.username === cleanUsername)) return prev;
 
-      if (isVIPGift) {
+      if (isVIPUser) {
         const currentVIPs = prev.filter((g) => g.isVIP);
         const vipIndex = currentVIPs.length % VIP_POSITIONS.length;
         const targetSpot = VIP_POSITIONS[vipIndex];
@@ -175,14 +174,14 @@ export const Stage: React.FC = () => {
     }
   };
 
-  // WebSockets Connection
+  // WebSockets Connection - Listening to 'userJoined'
   useEffect(() => {
     const socket = io('http://localhost:3000');
 
     socket.on(
-      'giftReceived',
+      'userJoined',
       (data: { username: string; characterType?: CharacterType; isVIP?: boolean }) => {
-        handleGiftReceived(data.username, data.characterType, data.isVIP || false);
+        handleUserJoined(data.username, data.characterType, data.isVIP || false);
       }
     );
 
@@ -206,90 +205,102 @@ export const Stage: React.FC = () => {
         </div>
       )}
 
-      {/* Stage Background */}
-      <img
-        src={STAGE_CONFIG.backgroundImg}
-        alt="Stage Hall"
-        className="absolute inset-0 w-full h-full object-cover z-0"
-      />
+      {/* Fast Camera Pan & Rotate Wrapper */}
+      <div className="absolute inset-0 w-full h-full animate-stage-pan origin-center">
+        {/* Stage Background */}
+        <img
+          src={STAGE_CONFIG.backgroundImg}
+          alt="Stage Hall"
+          className="absolute inset-0 w-full h-full object-cover z-0"
+        />
 
-      {/* Dancers */}
-      {gifters.map((gifter) => {
-        let calculatedHeight = 220;
-        let zIndex = 500;
+        {/* Fast Disco Lighting Effect Overlay */}
+        <div className="absolute inset-0 z-10 pointer-events-none overflow-hidden mix-blend-screen">
+          <div className="absolute -top-20 -left-20 w-[60vw] h-[100vh] bg-gradient-to-br from-cyan-400/50 via-blue-500/30 to-transparent blur-3xl animate-ping" style={{ animationDuration: '1.2s' }} />
+          <div className="absolute -top-20 -right-20 w-[60vw] h-[100vh] bg-gradient-to-bl from-pink-500/50 via-purple-500/30 to-transparent blur-3xl animate-pulse" style={{ animationDuration: '0.6s' }} />
+        </div>
 
-        if (gifter.isVIP) {
-          calculatedHeight = 230;
-          zIndex = 850;
-        } else {
-          const depthRatio = (gifter.y - 66) / 29;
-          const baseHeight = 160 + depthRatio * 160;
-          calculatedHeight = Math.round(baseHeight * crowdScale);
-          zIndex = Math.round(gifter.y * 10);
-        }
+        {/* Rapid Flashing Disco Floor Mood */}
+        <div className="absolute inset-0 z-10 pointer-events-none mix-blend-color animate-pulse bg-gradient-to-t from-purple-600/40 via-pink-500/30 to-blue-600/40" style={{ animationDuration: '0.4s' }} />
 
-        const minFontSize = gifters.length > 40 ? 7 : 9;
-        const fontMultiplier = gifter.isVIP ? 0.09 : 0.075;
-        const fontSize = Math.max(minFontSize, calculatedHeight * fontMultiplier);
+        {/* Dancers */}
+        {gifters.map((gifter) => {
+          let calculatedHeight = 220;
+          let zIndex = 500;
 
-        return (
-          <div
-            key={gifter.id}
-            className={`absolute transform -translate-x-1/2 -translate-y-full transition-all duration-300 ${
-              gifter.isVIP ? 'animate-bounce' : ''
-            }`}
-            style={{
-              left: `${gifter.x}%`,
-              top: `${gifter.y}%`,
-              zIndex,
-              animationDuration: gifter.isVIP ? '3s' : undefined,
-            }}
-          >
-            <div className="flex flex-col items-center relative">
-              {/* VIP Aura */}
-              {gifter.isVIP && (
-                <div className="absolute inset-0 bg-amber-400/20 blur-2xl rounded-full scale-150 pointer-events-none" />
-              )}
+          if (gifter.isVIP) {
+            calculatedHeight = 230;
+            zIndex = 850;
+          } else {
+            const depthRatio = (gifter.y - 66) / 29;
+            const baseHeight = 160 + depthRatio * 160;
+            calculatedHeight = Math.round(baseHeight * crowdScale);
+            zIndex = Math.round(gifter.y * 10);
+          }
 
-              {/* Name Badge */}
-              <span
-                className={`font-bold px-2.5 py-0.5 rounded-full shadow-2xl whitespace-nowrap mb-1 z-10 ${
-                  gifter.isVIP
-                    ? 'bg-gradient-to-r from-amber-500 via-yellow-300 to-amber-500 text-black border border-yellow-100 shadow-amber-500/50'
-                    : 'bg-black/80 text-amber-300 font-semibold border border-amber-400/50'
-                }`}
-                style={{ fontSize: `${fontSize}px` }}
-              >
-                {gifter.isVIP ? `👑 VIP: ${gifter.username}` : gifter.username}
-              </span>
+          const minFontSize = gifters.length > 40 ? 7 : 9;
+          const fontMultiplier = gifter.isVIP ? 0.09 : 0.075;
+          const fontSize = Math.max(minFontSize, calculatedHeight * fontMultiplier);
 
-              {/* Character Render */}
-              <div className="relative z-10">
-                <Character
-                  type={gifter.characterType}
-                isDancing={gifter.isDancing}
-                  height={calculatedHeight}
-                />
-              </div>
+          return (
+            <div
+              key={gifter.id}
+              className={`absolute transform -translate-x-1/2 -translate-y-full transition-all duration-300 ${
+                gifter.isVIP ? 'animate-bounce' : ''
+              }`}
+              style={{
+                left: `${gifter.x}%`,
+                top: `${gifter.y}%`,
+                zIndex,
+                animationDuration: gifter.isVIP ? '1.5s' : undefined,
+              }}
+            >
+              <div className="flex flex-col items-center relative">
+                {/* VIP Aura */}
+                {gifter.isVIP && (
+                  <div className="absolute inset-0 bg-amber-400/20 blur-2xl rounded-full scale-150 pointer-events-none animate-pulse" style={{ animationDuration: '0.5s' }} />
+                )}
 
-              {/* VIP Cloud Pedestal */}
-              {gifter.isVIP && (
-                <div
-                  className="absolute -bottom-4 z-0 flex items-center justify-center pointer-events-none"
-                  style={{ width: `${calculatedHeight * 0.9}px` }}
+                {/* Name Badge */}
+                <span
+                  className={`font-bold px-2.5 py-0.5 rounded-full shadow-2xl whitespace-nowrap mb-1 z-10 ${
+                    gifter.isVIP
+                      ? 'bg-gradient-to-r from-amber-500 via-yellow-300 to-amber-500 text-black border border-yellow-100 shadow-amber-500/50'
+                      : 'bg-black/80 text-amber-300 font-semibold border border-amber-400/50'
+                  }`}
+                  style={{ fontSize: `${fontSize}px` }}
                 >
-                  <div className="absolute w-full h-8 bg-amber-300/30 rounded-full blur-md" />
-                  <div className="relative flex items-center justify-center w-full h-7">
-                    <div className="w-1/3 h-7 bg-gradient-to-t from-amber-200/90 to-amber-100/90 rounded-full shadow-lg border-b border-amber-300/50 -mr-2" />
-                    <div className="w-1/2 h-10 bg-gradient-to-t from-amber-200/90 via-yellow-100/90 to-amber-50/90 rounded-full shadow-xl border-t border-amber-200 -mt-2 z-10" />
-                    <div className="w-1/3 h-7 bg-gradient-to-t from-amber-200/90 to-amber-100/90 rounded-full shadow-lg border-b border-amber-300/50 -ml-2" />
-                  </div>
+                  {gifter.isVIP ? `👑 VIP: ${gifter.username}` : gifter.username}
+                </span>
+
+                {/* Character Render */}
+                <div className="relative z-10">
+                  <Character
+                    type={gifter.characterType}
+                    isDancing={gifter.isDancing}
+                    height={calculatedHeight}
+                  />
                 </div>
-              )}
+
+                {/* VIP Cloud Pedestal */}
+                {gifter.isVIP && (
+                  <div
+                    className="absolute -bottom-4 z-0 flex items-center justify-center pointer-events-none"
+                    style={{ width: `${calculatedHeight * 0.9}px` }}
+                  >
+                    <div className="absolute w-full h-8 bg-amber-300/30 rounded-full blur-md" />
+                    <div className="relative flex items-center justify-center w-full h-7">
+                      <div className="w-1/3 h-7 bg-gradient-to-t from-amber-200/90 to-amber-100/90 rounded-full shadow-lg border-b border-amber-300/50 -mr-2" />
+                      <div className="w-1/2 h-10 bg-gradient-to-t from-amber-200/90 via-yellow-100/90 to-amber-50/90 rounded-full shadow-xl border-t border-amber-200 -mt-2 z-10" />
+                      <div className="w-1/3 h-7 bg-gradient-to-t from-amber-200/90 to-amber-100/90 rounded-full shadow-lg border-b border-amber-300/50 -ml-2" />
+                    </div>
+                  </div>
+                )}
+              </div>
             </div>
-          </div>
-        );
-      })}
+          );
+        })}
+      </div>
     </div>
   );
 };

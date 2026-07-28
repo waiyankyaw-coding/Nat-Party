@@ -22,3 +22,35 @@
   animation: hipSway 1.8s infinite ease-in-out;
   transform-origin: bottom center;
 }
+
+@keyframes discoBeamLeft {
+  0%, 100% { transform: rotate(-35deg); opacity: 0.4; }
+  50% { transform: rotate(-15deg); opacity: 0.7; }
+}
+
+@keyframes discoBeamRight {
+  0%, 100% { transform: rotate(35deg); opacity: 0.4; }
+  50% { transform: rotate(15deg); opacity: 0.7; }
+}
+
+.animate-beam-left {
+  animation: discoBeamLeft 4s ease-in-out infinite alternate;
+  transform-origin: top left;
+}
+
+.animate-beam-right {
+  animation: discoBeamRight 4s ease-in-out infinite alternate;
+  transform-origin: top right;
+}
+
+@keyframes stageRotateFast {
+  0% { transform: scale(1.0) rotate(0deg); }
+  25% { transform: scale(1.02) rotate(0.4deg); }
+  50% { transform: scale(1.04) rotate(-0.4deg); }
+  75% { transform: scale(1.02) rotate(0.4deg); }
+  100% { transform: scale(1.0) rotate(0deg); }
+}
+
+.animate-stage-pan {
+  animation: stageRotateFast 4s ease-in-out infinite; /* Smashed down from 15s to 4s for rapid movement */
+}
